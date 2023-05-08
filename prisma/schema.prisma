@@ -1,17 +1,148 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgcrypto]
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  // directUrl         = env("DIRECT_URL")
 }
 
 model User {
+  userId              String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username            String                @unique
+  nickname            String?               @unique
+  email               String                @unique
+  password            String
+  provider            String                @default("local")
+  picture             String                @default("default/picture")
+  country_code        String?
+  Country             CountryMaster?        @relation(fields: [country_code], references: [code])
+  role_id             Int                   @default(1)
+  Role                RoleMaster            @relation(fields: [role_id], references: [id])
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @updatedAt
+  Comic               Comic[]
+  Rating              Rating[]
+  ShareDownloadMaster ShareDownloadMaster[]
+  ChapterLikes        ChapterLikes[]
+  Comments            Comments[]
+  Subscriber          Subscriber[]
+}
+
+model Comic {
+  comicId       String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String       @unique @db.Uuid
+  User          User         @relation(fields: [user_id], references: [userId])
+  username      String // nickname
+  comic_name    String
+  status_id     Int
+  Status        StatusMaster @relation(fields: [status_id], references: [id])
+  totalRating   Float        @default(0)
+  slug          String
+  summary       String
+  thumbnail     String
+  shareCount    BigInt       @default(0)
+  downloadCount BigInt       @default(0)
+  genre_id      Int
+  weeklyUpload  Boolean
+  uploadDay     String?
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  Rating              Rating[]
+  ShareDownloadMaster ShareDownloadMaster[]
+  Chapters            Chapters[]
+  Subscriber          Subscriber[]
+}
+
+model Chapters {
+  chapterId      String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chapter_number Int
+  comic_id       String     @unique @db.Uuid
+  Comic          Comic      @relation(fields: [comic_id], references: [comicId])
+  chapter_name   String
+  thumbnail      String
+  panels         Json
+  like_count     BigInt
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @updatedAt
+  Comments       Comments[]
+}
+
+model ChapterLikes {
+  object_id   String
+  user_id     String  @unique @db.Uuid
+  User        User    @relation(fields: [user_id], references: [userId])
+  like_status Boolean
+  object_type String
+
+  @@id([object_id, user_id])
+}
+
+model Comments {
+  id         BigInt   @id @default(autoincrement())
+  chapter_id String   @unique @db.Uuid
+  Chapter    Chapters @relation(fields: [chapter_id], references: [chapterId])
+  user_id    String   @unique @db.Uuid
+  User       User     @relation(fields: [user_id], references: [userId])
+  username   String
+  message    String
+}
+
+model Subscriber {
+  id        BigInt   @id @default(autoincrement())
+  comic_id  String   @unique @db.Uuid
+  Comic     Comic    @relation(fields: [comic_id], references: [comicId])
+  user_id   String   @unique @db.Uuid
+  User      User     @relation(fields: [user_id], references: [userId])
+  timeStamp DateTime @default(now())
+}
+
+// Table Subscriber {
+//   id int [pk]
+//   userId string
+//   ComicId UUID
+//   timeStamp datetime
+// }
+model Rating {
+  id       BigInt @id @default(autoincrement())
+  comic_id String @unique @db.Uuid
+  Comic    Comic  @relation(fields: [comic_id], references: [comicId])
+  user_id  String @unique @db.Uuid
+  User     User   @relation(fields: [user_id], references: [userId])
+  rate     Float
+}
+
+model ShareDownloadMaster {
+  id       BigInt @id @default(autoincrement())
+  comic_id String @unique @db.Uuid
+  Comic    Comic  @relation(fields: [comic_id], references: [comicId])
+  user_id  String @unique @db.Uuid
+  User     User   @relation(fields: [user_id], references: [userId])
+  type     String
+}
+
+model StatusMaster {
   id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  name  String
+  Comic Comic[]
+}
+
+model RoleMaster {
+  id   Int    @id @default(autoincrement())
+  name String
+  User User[]
+}
+
+model CountryMaster {
+  name      String
+  phoneCode String @unique
+  code      String @id @unique
+  User      User[]
 }
