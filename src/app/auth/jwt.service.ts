@@ -10,6 +10,6 @@ export class JWTAuthService {
   login(user: Partial<User>) {
     const payload = { email: user.email, role: user.role_id, username: user.username, provider: user.provider };
     const accessToken = this.jwtService.sign(payload);
-    return { accessToken };
+    return { accessToken, payload };
   }
 }

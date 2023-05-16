@@ -22,7 +22,7 @@ export class GoogleOAuthStrategy extends PassportStrategy(Strategy) {
     console.log(refreshToken);
     console.log(profile);
 
-    let user = await this.userService.userExistsUsingEmail(profile._json.email, profile.provider);
+    let user = await this.userService.userExistsUsingEmail(profile._json.email, profile._json.name, profile.provider);
     if (!user) {
       user = await this.userService.createUser({
         username: profile._json.name,
