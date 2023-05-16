@@ -1,9 +1,11 @@
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AUTH_TOKEN } from 'src/common/constants/cookieConst';
 
+@Injectable()
 export class JWTstrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private config: ConfigService) {
     const tokenExtractor = (req: Request) => {
@@ -14,9 +16,8 @@ export class JWTstrategy extends PassportStrategy(Strategy, 'jwt') {
 
       return token || ExtractJwt.fromAuthHeaderAsBearerToken()(req);
     };
-
     super({
-      secretOrKey: config.get('ACCESS_TOKEN_SECRET'),
+      secretOrKey: config.get<string>('ACCESS_TOKEN_SECRET'),
       jwtFromRequest: tokenExtractor,
     });
   }
