@@ -1,3 +1,3 @@
 import { AuthProviderType } from './authProvider.type';
-
-export { AuthProviderType };
+import { JwtUserPayload } from './JwtUserPayload';
+export { AuthProviderType, JwtUserPayload };

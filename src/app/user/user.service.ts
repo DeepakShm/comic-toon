@@ -11,7 +11,7 @@ export class UserService {
   async userExistsUsingEmail(email: string, username: string, provider: string) {
     const user = await this.prisma.user.findUnique({
       where: { email: email },
-      select: { provider: true, username: true, email: true, role_id: true },
+      select: { provider: true, username: true, email: true, RolesOnUsers: { select: { role_id: true } } },
     });
     if (user && user.provider === provider) return user;
     return false;
@@ -29,9 +29,9 @@ export class UserService {
         username: userDetails.username,
         provider: userDetails.provider,
         picture: userDetails.picture || DEFAULT_PICTURE_URL,
-        Role: { connect: { id: 1 } },
+        RolesOnUsers: { create: [{ role: { connect: { id: 1 } } }] },
       },
-      select: { provider: true, username: true, email: true, role_id: true },
+      select: { provider: true, username: true, email: true, RolesOnUsers: { select: { role_id: true } } },
     });
 
     return newUser;
@@ -40,7 +40,13 @@ export class UserService {
   async userExistsUsingEmailPassword(email: string, password: string, provider: string) {
     const user = await this.prisma.user.findUnique({
       where: { email: email },
-      select: { provider: true, username: true, email: true, role_id: true, password: true },
+      select: {
+        provider: true,
+        username: true,
+        email: true,
+        RolesOnUsers: { select: { role_id: true } },
+        password: true,
+      },
     });
 
     if (!user) return { ok: false, message: 'User does not exists', user: null };
@@ -64,7 +70,12 @@ export class UserService {
   async userDetailsUsingEmail(email: string) {
     const user = await this.prisma.user.findUnique({
       where: { email },
-      select: { nickname: true, email: true, provider: true, Role: { select: { name: true } } },
+      select: {
+        nickname: true,
+        email: true,
+        provider: true,
+        RolesOnUsers: { select: { role: { select: { name: true } } } },
+      },
     });
 
     if (!user) throw new NotFoundException('User not found');
