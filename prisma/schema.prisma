@@ -23,8 +23,6 @@ model User {
   picture             String                @default("default/picture")
   country_code        String?
   Country             CountryMaster?        @relation(fields: [country_code], references: [code])
-  role_id             Int                   @default(1)
-  Role                RoleMaster            @relation(fields: [role_id], references: [id])
   created_at          DateTime              @default(now())
   updated_at          DateTime              @updatedAt
   Comic               Comic[]
@@ -33,6 +31,7 @@ model User {
   ChapterLikes        ChapterLikes[]
   Comments            Comments[]
   Subscriber          Subscriber[]
+  RolesOnUsers        RolesOnUsers[]
 }
 
 model Comic {
@@ -135,9 +134,19 @@ model StatusMaster {
 }
 
 model RoleMaster {
-  id   Int    @id @default(autoincrement())
-  name String
-  User User[]
+  id           Int            @id @default(autoincrement())
+  name         String
+  RolesOnUsers RolesOnUsers[]
+}
+
+model RolesOnUsers {
+  user_id    String     @db.Uuid
+  user       User       @relation(fields: [user_id], references: [userId])
+  role_id    Int
+  role       RoleMaster @relation(fields: [role_id], references: [id])
+  assignedAt DateTime   @default(now())
+
+  @@id([role_id, user_id])
 }
 
 model CountryMaster {

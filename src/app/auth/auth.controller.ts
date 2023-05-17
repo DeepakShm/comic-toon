@@ -6,6 +6,7 @@ import { JWTAuthService } from './jwt.service';
 import { CreateUserDTO, SignInDTO } from './dto/signup.dto';
 import { UserService } from '../user/user.service';
 import { APIresponseType } from 'src/common/types/response.type';
+import { JwtUserPayload } from 'src/common/types';
 
 @Controller('auth')
 export class AuthController {
@@ -24,7 +25,7 @@ export class AuthController {
   @Get('google/redirect')
   @UseGuards(GoogleAuthGuard)
   handleGoogleRedirect(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, payload } = this.jwtService.login(req.user);
+    const { accessToken } = this.jwtService.login(req.user as JwtUserPayload);
     console.log(req.user);
     this.authService.setAuthTokenCookie(res, accessToken);
     return res.redirect('https://github.com/DeepakShm');
