@@ -74,7 +74,8 @@ export class UserService {
         nickname: true,
         email: true,
         provider: true,
-        RolesOnUsers: { select: { role: { select: { name: true } } } },
+        username: true,
+        RolesOnUsers: { select: { role: { select: { name: true, id: true } } } },
       },
     });
 
