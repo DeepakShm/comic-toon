@@ -7,6 +7,7 @@ import { CreateUserDTO, SignInDTO } from './dto/signup.dto';
 import { UserService } from '../user/user.service';
 import { APIresponseType } from 'src/common/types/response.type';
 import { JwtUserPayload } from 'src/common/types';
+import { clearCookies, setAuthTokenCookie } from 'src/common/utils/cookieManager';
 
 @Controller('auth')
 export class AuthController {
@@ -26,8 +27,8 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   handleGoogleRedirect(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const { accessToken } = this.jwtService.login(req.user as JwtUserPayload);
-    console.log(req.user);
-    this.authService.setAuthTokenCookie(res, accessToken);
+    // console.log(req.user);
+    setAuthTokenCookie(res, accessToken);
     return res.redirect('https://github.com/DeepakShm');
   }
 
@@ -45,8 +46,7 @@ export class AuthController {
 
     // now login the user with newUser details
     const { accessToken } = this.jwtService.login(newUser);
-    this.authService.setAuthTokenCookie(res, accessToken);
-    console.log('Token Generated');
+    setAuthTokenCookie(res, accessToken);
 
     // might add user details in response in future.
     return { ok: true, message: 'User successfully created' };
@@ -67,7 +67,7 @@ export class AuthController {
     }
 
     const { accessToken } = this.jwtService.login(userExists.user);
-    this.authService.setAuthTokenCookie(res, accessToken);
+    setAuthTokenCookie(res, accessToken);
 
     return { ok: true, message: userExists.message };
   }
@@ -78,7 +78,7 @@ export class AuthController {
     //   throw new ServiceUnavailableException({ error });
     // });
 
-    this.authService.clearCookies(res);
+    clearCookies(res);
 
     return { ok: true, message: 'Logout Successfull' };
   }

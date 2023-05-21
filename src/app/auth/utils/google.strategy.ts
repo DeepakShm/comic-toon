@@ -19,10 +19,6 @@ export class GoogleOAuthStrategy extends PassportStrategy(Strategy) {
   // after successfull authentication of user, this function is invoked
   // So we can here do some database calls, to store the details or validate user.
   async validate(accessToken: string, refreshToken: string, profile: Profile): Promise<JwtUserPayload> {
-    console.log(accessToken);
-    console.log(refreshToken);
-    console.log(profile);
-
     let user = await this.userService.userExistsUsingEmail(profile._json.email, profile._json.name, profile.provider);
     if (!user) {
       user = await this.userService.createUser({

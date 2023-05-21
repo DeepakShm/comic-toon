@@ -19,6 +19,7 @@ import { JWTstrategy } from './utils/jwt.strategy';
           },
         };
       },
+      global: true,
       inject: [ConfigService],
     }),
   ],

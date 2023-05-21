@@ -4,10 +4,12 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AUTH_TOKEN } from 'src/common/constants/cookieConst';
+import { ReqUser } from 'src/common/types/JwtUserPayload';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class JWTstrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private config: ConfigService) {
+  constructor(private config: ConfigService, private prisma: PrismaService) {
     const tokenExtractor = (req: Request) => {
       let token = null;
       if (req && req.cookies) {
@@ -22,9 +24,11 @@ export class JWTstrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: any) {
-    console.log({ payload });
-
-    return payload;
+  async validate(payload: ReqUser): Promise<ReqUser> {
+    const userRoles = await this.prisma.user.findUnique({
+      where: { email: payload.email },
+      select: { RolesOnUsers: { select: { role_id: true } } },
+    });
+    return { ...payload, roles: userRoles.RolesOnUsers.map((r) => r.role_id) };
   }
 }
