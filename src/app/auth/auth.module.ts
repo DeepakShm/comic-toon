@@ -13,9 +13,9 @@ import { JWTstrategy } from './utils/jwt.strategy';
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => {
         return {
-          secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
+          secret: configService.getOrThrow<string>('ACCESS_TOKEN_SECRET'),
           signOptions: {
-            expiresIn: configService.get<string>('JWT_EXPIRES_IN'),
+            expiresIn: configService.getOrThrow<string>('JWT_EXPIRES_IN'),
           },
         };
       },

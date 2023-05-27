@@ -35,24 +35,30 @@ model User {
 }
 
 model Comic {
-  comicId       String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id       String       @unique @db.Uuid
-  User          User         @relation(fields: [user_id], references: [userId])
-  username      String // nickname
-  comic_name    String
-  status_id     Int
-  Status        StatusMaster @relation(fields: [status_id], references: [id])
-  totalRating   Float        @default(0)
-  slug          String
-  summary       String
-  thumbnail     String
-  shareCount    BigInt       @default(0)
-  downloadCount BigInt       @default(0)
-  genre_id      Int
-  weeklyUpload  Boolean
-  uploadDay     String?
-  created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
+  comicId              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id              String       @unique @db.Uuid
+  User                 User         @relation(fields: [user_id], references: [userId])
+  username             String
+  comic_name           String
+  summary              String
+  primary_genre        Int
+  secondary_genre      Int
+  PrimaryGenre         GenreMaster  @relation("primary_genre", fields: [primary_genre], references: [genreId])
+  SecondaryGenre       GenreMaster  @relation("secondary_genre", fields: [secondary_genre], references: [genreId])
+  square_thumbnail     String
+  horizontal_thumbnail String
+  status_id            Int
+  Status               StatusMaster @relation(fields: [status_id], references: [id])
+  totalRating          Float        @default(0)
+  slug                 String
+  shareCount           BigInt       @default(0)
+  downloadCount        BigInt       @default(0)
+  // weeklyUpload         Boolean
+  uploadDay            String?
+  policiesApproved     Boolean
+  created_at           DateTime     @default(now())
+  updated_at           DateTime     @updatedAt
+  deleted              Boolean      @default(false)
 
   Rating              Rating[]
   ShareDownloadMaster ShareDownloadMaster[]
@@ -60,18 +66,33 @@ model Comic {
   Subscriber          Subscriber[]
 }
 
+model GenreMaster {
+  genreId               Int     @id @default(autoincrement())
+  ComicToPrimaryGenre   Comic[] @relation("primary_genre")
+  ComicToSecondaryGenre Comic[] @relation("secondary_genre")
+}
+
 model Chapters {
-  chapterId      String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  chapter_number Int
-  comic_id       String     @unique @db.Uuid
-  Comic          Comic      @relation(fields: [comic_id], references: [comicId])
-  chapter_name   String
-  thumbnail      String
-  panels         Json
-  like_count     BigInt
-  created_at     DateTime   @default(now())
-  updated_at     DateTime   @updatedAt
-  Comments       Comments[]
+  chapterId           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chapter_number      Int
+  comic_id            String     @unique @db.Uuid
+  Comic               Comic      @relation(fields: [comic_id], references: [comicId])
+  chapter_name        String
+  thumbnail           String
+  like_count          BigInt
+  verticalReadingMode Boolean
+  created_at          DateTime   @default(now())
+  updated_at          DateTime   @updatedAt
+  deleted             Boolean    @default(false)
+  Comments            Comments[]
+  Panels              Panels[]
+}
+
+model Panels {
+  panelId     BigInt   @id @default(autoincrement())
+  panelUrl    String
+  chapater_id String   @unique @db.Uuid
+  Chapter     Chapters @relation(fields: [chapater_id], references: [chapterId])
 }
 
 model ChapterLikes {
@@ -103,12 +124,6 @@ model Subscriber {
   timeStamp DateTime @default(now())
 }
 
-// Table Subscriber {
-//   id int [pk]
-//   userId string
-//   ComicId UUID
-//   timeStamp datetime
-// }
 model Rating {
   id       BigInt @id @default(autoincrement())
   comic_id String @unique @db.Uuid

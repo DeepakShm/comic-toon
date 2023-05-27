@@ -19,7 +19,7 @@ export class JWTstrategy extends PassportStrategy(Strategy, 'jwt') {
       return token || ExtractJwt.fromAuthHeaderAsBearerToken()(req);
     };
     super({
-      secretOrKey: config.get<string>('ACCESS_TOKEN_SECRET'),
+      secretOrKey: config.getOrThrow<string>('ACCESS_TOKEN_SECRET'),
       jwtFromRequest: tokenExtractor,
     });
   }

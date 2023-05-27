@@ -9,9 +9,9 @@ import { JwtUserPayload } from 'src/common/types';
 export class GoogleOAuthStrategy extends PassportStrategy(Strategy) {
   constructor(private config: ConfigService, private readonly userService: UserService) {
     super({
-      clientID: config.get<string>('CLIENT_ID'),
-      clientSecret: config.get('CLIENT_SECRET'),
-      callbackURL: config.get('GOOGLE_AUTH_REDIRECT_URI'),
+      clientID: config.getOrThrow<string>('CLIENT_ID'),
+      clientSecret: config.getOrThrow('CLIENT_SECRET'),
+      callbackURL: config.getOrThrow('GOOGLE_AUTH_REDIRECT_URI'),
       scope: ['profile', 'email'],
     });
   }
