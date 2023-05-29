@@ -1,4 +1,14 @@
-import { Body, Controller, ParseFilePipe, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ParseFilePipe,
+  Post,
+  UnprocessableEntityException,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { PublisherService } from './publisher.service';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { ROLES_ENUM } from 'src/common/constants/roles';
@@ -8,6 +18,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { FileTypeCustomValidator } from 'src/common/validators/fileType.validator';
 import { FileCustomValidator } from 'src/common/validators/fileCustom.validator';
+import { CreateComicDTO } from './dto/creatComic.dto';
 
 @Controller('test')
 export class TestController {
@@ -16,47 +27,55 @@ export class TestController {
     private readonly cloudinaryService: CloudinaryService
   ) {}
 
-  @Post('/upload/single')
+  @Post('/upload/comic')
   @HasRoles(ROLES_ENUM.PUBLISHER)
   @UseGuards(JWTGuard, RoleGuard)
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'panels', maxCount: 1 },
-      { name: 'chapters', maxCount: 3 },
-    ])
+    FileFieldsInterceptor(
+      [
+        { name: 'sqaureThumbnail', maxCount: 1 },
+        { name: 'horizontalThumnail', maxCount: 1 },
+      ],
+      { preservePath: true }
+    )
   )
-  uploadSingleFile(
-    @Body() formData,
+  uploadComic(
+    @Body() comicData: CreateComicDTO,
     @UploadedFiles(
       new ParseFilePipe({
         fileIsRequired: true,
         validators: [
           new FileTypeCustomValidator({ fileType: 'image/png|image/jpe?g', interceptorType: 'FILE-FIELDS' }),
         ],
+        exceptionFactory: () => {
+          throw new UnprocessableEntityException('Thumnails are required');
+        },
       })
     )
-    files: { panels: Express.Multer.File[]; chapters: Express.Multer.File[] }
+    files: { sqaureThumbnail: Express.Multer.File[]; horizontalThumnail: Express.Multer.File[] }
   ) {
+    if (!(files?.horizontalThumnail && files?.sqaureThumbnail))
+      throw new BadRequestException(`'Sqaure' and 'Horizontal' thumbnails are required`);
     // validating field one files
     const panelFileSizeValidator = new FileCustomValidator({
-      minSize: 10,
-      maxSize: 500,
-      height: 1000,
-      width: 1000,
+      size: { min: 10, max: 500 },
+      dim: { width: 1000, height: 1000 },
+      ratio: { h: 1, w: 1 },
       interceptorType: 'FILES',
     });
-    if (!panelFileSizeValidator.isFilesValid(files.panels)) panelFileSizeValidator.buildErrorMessage();
+    if (!panelFileSizeValidator.isFilesValid(files.sqaureThumbnail)) panelFileSizeValidator.buildErrorMessage();
 
     const chapterFileSizeValidator = new FileCustomValidator({
-      minSize: 10,
-      maxSize: 2000,
-      height: 1080,
-      width: 1920,
+      size: { min: 10, max: 500 },
+      dim: { width: 1920, height: 1080 },
+      ratio: { w: 16, h: 9 },
       interceptorType: 'FILES',
     });
-    if (!chapterFileSizeValidator.isFilesValid(files.chapters)) chapterFileSizeValidator.buildErrorMessage();
+    if (!chapterFileSizeValidator.isFilesValid(files.horizontalThumnail)) chapterFileSizeValidator.buildErrorMessage();
 
-    return { formData };
+    console.log(comicData);
+
+    return { comicData };
     // return this.cloudinaryService.uploadSingleFile(panel);
   }
 }

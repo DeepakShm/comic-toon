@@ -7,11 +7,19 @@ import { AllFileValidatorType, FileValidatorType, FilesValidatorType } from '../
 /**
  * size needs to be in Pixels
  */
-type FileCustomValidatorOptions = {
-  height: number;
-  width: number;
-  minSize: number;
-  maxSize: number;
+export type FileCustomValidatorOptions = {
+  dim: {
+    height: number;
+    width: number;
+  };
+  ratio: {
+    h: number;
+    w: number;
+  };
+  size: {
+    min: number;
+    max: number;
+  };
   interceptorType: 'FILE' | 'FILES';
 };
 
@@ -37,23 +45,36 @@ export class FileCustomValidator extends FileValidator<FileCustomValidatorOption
 
   buildErrorMessage(): string {
     throw new BadRequestException(
-      `File Validation failed (expected file to be between this range ${this.validationOptions.minSize} - ${this.validationOptions.maxSize} KB and of ${this.validationOptions.width} X ${this.validationOptions.height} px Dimensions)`
+      `File Validation failed (expected file to be between this range ${this.validationOptions.size.min} - ${this.validationOptions.size.max} KB and of ${this.validationOptions.dim.width} X ${this.validationOptions.dim.height} px Dimensions)`
     );
   }
 
   isFileValid(file: FileValidatorType): boolean | Promise<boolean> {
     const { height, width } = imageDim(file.buffer);
-    if (height !== this.validationOptions.height || width !== this.validationOptions.width) return false;
+    // image dimension check
+    if (height < this.validationOptions.dim.height || width < this.validationOptions.dim.width) return false;
+
+    // image aspect ratio check
+    if (height / this.validationOptions.ratio.h !== width / this.validationOptions.ratio.w) return false;
+
+    // image size check
     const size = file.size / 1000;
-    return size >= this.validationOptions.minSize && size <= this.validationOptions.maxSize;
+    return size >= this.validationOptions.size.min && size <= this.validationOptions.size.max;
   }
 
   isFilesValid(files: FilesValidatorType) {
     for (let i = 0; i < files.length; i++) {
       const { height, width } = imageDim(files[i].buffer);
-      if (height !== this.validationOptions.height || width !== this.validationOptions.width) return false;
+
+      // image dimension check
+      if (height < this.validationOptions.dim.height || width < this.validationOptions.dim.width) return false;
+
+      // image aspect ratio check
+      if (height / this.validationOptions.ratio.h !== width / this.validationOptions.ratio.w) return false;
+
+      // image size check
       const size = files[i].size / 1000;
-      if (size < this.validationOptions.minSize || size > this.validationOptions.maxSize) return false;
+      if (size < this.validationOptions.size.min || size > this.validationOptions.size.max) return false;
     }
     return true;
   }

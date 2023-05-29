@@ -1,62 +1,106 @@
-import { Body, Controller, ParseFilePipe, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ParseFilePipe,
+  Post,
+  Req,
+  UnprocessableEntityException,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { PublisherService } from './publisher.service';
 import { HasRoles } from 'src/common/decorators/has-roles.decorator';
 import { ROLES_ENUM } from 'src/common/constants/roles';
 import { JWTGuard } from '../auth/utils/jwt.guard';
 import { RoleGuard } from 'src/common/guards/roles.guard';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { ChapterFilesType, ComicThumbnailsType, CreateChapterDTO, CreateComicDTO } from './dto/creatComic.dto';
+import { Request } from 'express';
+import { ReqUser } from 'src/common/types/JwtUserPayload';
 import { FileTypeCustomValidator } from 'src/common/validators/fileType.validator';
-import { FileCustomValidator } from 'src/common/validators/fileCustom.validator';
+import { APIresponseType } from 'src/common/types/response.type';
+import { ValidationService } from './validation.service';
 
 @Controller('publisher')
 export class PublisherController {
   constructor(
     private readonly publisherService: PublisherService,
-    private readonly cloudinaryService: CloudinaryService
+    private readonly validationService: ValidationService
   ) {}
 
-  @Post('/upload/single')
+  // route handler for uploading comic thumbnail and data.
+  @Post('/upload/comic')
   @HasRoles(ROLES_ENUM.PUBLISHER)
   @UseGuards(JWTGuard, RoleGuard)
   @UseInterceptors(
     FileFieldsInterceptor([
-      { name: 'panels', maxCount: 1 },
-      { name: 'chapters', maxCount: 3 },
+      { name: 'sqaureThumbnail', maxCount: 1 },
+      { name: 'horizontalThumbnail', maxCount: 1 },
     ])
   )
-  uploadSingleFile(
-    @Body() formData,
+  async uploadComic(
+    @Body() comicData: CreateComicDTO,
     @UploadedFiles(
       new ParseFilePipe({
         fileIsRequired: true,
         validators: [
           new FileTypeCustomValidator({ fileType: 'image/png|image/jpe?g', interceptorType: 'FILE-FIELDS' }),
         ],
+        exceptionFactory: () => {
+          throw new UnprocessableEntityException('Thumnails are required');
+        },
       })
     )
-    files: { panels: Express.Multer.File[]; chapters: Express.Multer.File[] }
-  ) {
-    // validating field one files
-    const panelFileSizeValidator = new FileCustomValidator({
-      minSize: 10,
-      maxSize: 500,
-      height: 1000,
-      width: 1000,
-      interceptorType: 'FILES',
-    });
-    if (!panelFileSizeValidator.isFilesValid(files.panels)) panelFileSizeValidator.buildErrorMessage();
+    files: ComicThumbnailsType,
+    @Req() req: Request
+  ): Promise<APIresponseType> {
+    // validating comic thumbnails
+    if (!(files?.horizontalThumbnail && files?.sqaureThumbnail))
+      throw new BadRequestException(`'Sqaure' and 'Horizontal' thumbnails are required`);
 
-    const chapterFileSizeValidator = new FileCustomValidator({
-      minSize: 10,
-      maxSize: 2000,
-      height: 1080,
-      width: 1920,
-      interceptorType: 'FILES',
-    });
-    if (!chapterFileSizeValidator.isFilesValid(files.chapters)) chapterFileSizeValidator.buildErrorMessage();
+    this.validationService.validatingComicThumbnails(files);
+    const userDetails = req.user as ReqUser;
+    const comic = await this.publisherService.createComic(comicData, files, userDetails);
 
-    return { formData };
-    // return this.cloudinaryService.uploadSingleFile(panel);
+    return { ok: true, message: 'Comic created', data: { comic: comic } };
+  }
+
+  @Post('/upload/chapter')
+  @HasRoles(ROLES_ENUM.PUBLISHER)
+  @UseGuards(JWTGuard, RoleGuard)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'thumbnail', maxCount: 1 },
+      { name: 'panels', maxCount: 15 },
+    ])
+  )
+  async uploadChapter(
+    @Body() chapterDetails: CreateChapterDTO,
+    @UploadedFiles(
+      new ParseFilePipe({
+        fileIsRequired: true,
+        validators: [
+          new FileTypeCustomValidator({ fileType: 'image/png|image/jpe?g', interceptorType: 'FILE-FIELDS' }),
+        ],
+        exceptionFactory: () => {
+          throw new UnprocessableEntityException('Thumnails are required');
+        },
+      })
+    )
+    files: ChapterFilesType,
+    @Req() req: Request
+  ): Promise<APIresponseType> {
+    // validating chapter image files
+    if (!(files?.thumbnail && files?.panels)) throw new BadRequestException(`'Thumbnail' and 'Panels' are required`);
+    this.validationService.validatingChapterFiles(files);
+
+    const userDetails = req.user as ReqUser;
+
+    // uploading and creating chapter
+    const chapter = await this.publisherService.createChapter(chapterDetails, files, userDetails);
+
+    return { ok: true, message: 'Comic created', data: { chapter } };
   }
 }
