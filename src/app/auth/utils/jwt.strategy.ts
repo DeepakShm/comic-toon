@@ -19,16 +19,16 @@ export class JWTstrategy extends PassportStrategy(Strategy, 'jwt') {
       return token || ExtractJwt.fromAuthHeaderAsBearerToken()(req);
     };
     super({
-      secretOrKey: config.get<string>('ACCESS_TOKEN_SECRET'),
+      secretOrKey: config.getOrThrow<string>('ACCESS_TOKEN_SECRET'),
       jwtFromRequest: tokenExtractor,
     });
   }
 
   async validate(payload: ReqUser): Promise<ReqUser> {
-    const userRoles = await this.prisma.user.findUnique({
+    const { RolesOnUsers, userId } = await this.prisma.user.findUnique({
       where: { email: payload.email },
-      select: { RolesOnUsers: { select: { role_id: true } } },
+      select: { userId: true, RolesOnUsers: { select: { role_id: true } } },
     });
-    return { ...payload, roles: userRoles.RolesOnUsers.map((r) => r.role_id) };
+    return { ...payload, roles: RolesOnUsers.map((r) => r.role_id), userId };
   }
 }
