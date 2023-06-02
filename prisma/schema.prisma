@@ -28,7 +28,7 @@ model User {
   Comic               Comic[]
   Rating              Rating[]
   ShareDownloadMaster ShareDownloadMaster[]
-  ChapterLikes        ChapterLikes[]
+  ChapterLikes        Likes[]
   Comments            Comments[]
   Subscriber          Subscriber[]
   RolesOnUsers        RolesOnUsers[]
@@ -53,6 +53,7 @@ model Comic {
   status_id                     Int
   Status                        StatusMaster @relation(fields: [status_id], references: [id])
   totalRating                   Float        @default(0)
+  totalSubs                     Int          @default(0)
   slug                          String
   shareCount                    Int          @default(0)
   downloadCount                 Int          @default(0)
@@ -104,24 +105,28 @@ model Panels {
   Chapter        Chapters @relation(fields: [chapater_id], references: [chapterId])
 }
 
-model ChapterLikes {
+model Likes {
   object_id   String
-  user_id     String  @db.Uuid
-  User        User    @relation(fields: [user_id], references: [userId])
-  like_status Boolean
+  user_id     String @db.Uuid
+  User        User   @relation(fields: [user_id], references: [userId])
   object_type String
 
   @@id([object_id, user_id])
 }
 
 model Comments {
-  id         Int      @id @default(autoincrement())
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   chapter_id String   @db.Uuid
   Chapter    Chapters @relation(fields: [chapter_id], references: [chapterId])
   user_id    String   @db.Uuid
   User       User     @relation(fields: [user_id], references: [userId])
   username   String
   message    String
+  like_count Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([chapter_id, user_id])
 }
 
 model Subscriber {
@@ -131,6 +136,8 @@ model Subscriber {
   user_id   String   @db.Uuid
   User      User     @relation(fields: [user_id], references: [userId])
   timeStamp DateTime @default(now())
+
+  @@unique([user_id, comic_id])
 }
 
 model Rating {
@@ -140,6 +147,8 @@ model Rating {
   user_id  String @db.Uuid
   User     User   @relation(fields: [user_id], references: [userId])
   rate     Float
+
+  @@unique([user_id, comic_id])
 }
 
 model ShareDownloadMaster {

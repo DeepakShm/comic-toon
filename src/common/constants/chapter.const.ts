@@ -1,0 +1,4 @@
+export enum LIKE_OBJECT_TYPE {
+  CHAPTER = 'CHAPTER',
+  COMMENT = 'COMMENT',
+}

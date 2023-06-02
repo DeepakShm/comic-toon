@@ -5,14 +5,14 @@ import { ChapterFilesType, ComicThumbnailsType } from './dto/creatComic.dto';
 @Injectable()
 export class ValidationService {
   sqaureThumbnailValidatorOptions: FileCustomValidatorOptions = {
-    size: { min: 100, max: 500 },
+    size: { min: 10, max: 500 },
     dim: { width: 1000, height: 1000 },
     ratio: { h: 1, w: 1 },
     interceptorType: 'FILES',
   };
 
   horizontalThumbnailValidatorOptions: FileCustomValidatorOptions = {
-    size: { min: 300, max: 700 },
+    size: { min: 30, max: 700 },
     dim: { width: 1920, height: 1080 },
     ratio: { w: 16, h: 9 },
     interceptorType: 'FILES',

@@ -8,6 +8,8 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './app/user/user.module';
 import { PublisherModule } from './app/publisher/publisher.module';
 import { CloudinaryModule } from './app/cloudinary/cloudinary.module';
+import { ComicModule } from './app/comic/comic.module';
+import { ComicChapterModule } from './app/comic-chapter/comic-chapter.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { CloudinaryModule } from './app/cloudinary/cloudinary.module';
     UserModule,
     PublisherModule,
     CloudinaryModule,
+    ComicModule,
+    ComicChapterModule,
   ],
   controllers: [AppController],
   providers: [AppService],
