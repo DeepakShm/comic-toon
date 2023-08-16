@@ -1,3 +1,4 @@
 import { PaginationDTO } from './Pagination.dto';
-
-export { PaginationDTO };
+import { RatingPayloadDTO } from './ratingPayload.dto';
+import { CommentPayloadDTO } from './comment.dto';
+export { PaginationDTO, RatingPayloadDTO, CommentPayloadDTO };
