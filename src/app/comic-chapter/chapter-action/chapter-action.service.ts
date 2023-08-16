@@ -55,8 +55,12 @@ export class ChapterActionService {
 
     const { userId: user_id, username } = userDetails;
 
-    const result = await this.prisma.comments.create({
-      data: { message: comment.message, chapter_id: comment.chapter_id, username, user_id },
+    const result = await this.prisma.comments.upsert({
+      create: { message: comment.message, chapter_id: comment.chapter_id, username, user_id },
+      where: { chapter_id_user_id: { chapter_id: comment.chapter_id, user_id } },
+      update: {
+        message: comment.message,
+      },
     });
 
     if (!result) throw new BadRequestException('Something went wrong');
