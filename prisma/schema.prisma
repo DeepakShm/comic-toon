@@ -36,38 +36,40 @@ model User {
 }
 
 model Comic {
-  comicId                       String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id                       String       @db.Uuid
-  User                          User         @relation(fields: [user_id], references: [userId])
+  comicId                       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                       String                @db.Uuid
+  User                          User                  @relation(fields: [user_id], references: [userId])
   username                      String
-  comic_name                    String       @unique
+  comic_name                    String                @unique
   summary                       String
   primary_genre                 Int
   secondary_genre               Int
-  PrimaryGenre                  GenreMaster  @relation("primary_genre", fields: [primary_genre], references: [genreId])
-  SecondaryGenre                GenreMaster  @relation("secondary_genre", fields: [secondary_genre], references: [genreId])
+  PrimaryGenre                  GenreMaster           @relation("primary_genre", fields: [primary_genre], references: [genreId])
+  SecondaryGenre                GenreMaster           @relation("secondary_genre", fields: [secondary_genre], references: [genreId])
   square_thumbnail              String
   horizontal_thumbnail          String
   square_thumbnail_metadata     Json
   horizontal_thumbnail_metadata Json
   status_id                     Int
-  Status                        StatusMaster @relation(fields: [status_id], references: [id])
-  totalRating                   Float        @default(0)
-  totalSubs                     Int          @default(0)
+  Status                        StatusMaster          @relation(fields: [status_id], references: [id])
+  totalRating                   Float                 @default(0)
+  totalSubs                     Int                   @default(0)
   slug                          String
-  shareCount                    Int          @default(0)
-  downloadCount                 Int          @default(0)
+  shareCount                    Int                   @default(0)
+  downloadCount                 Int                   @default(0)
   // weeklyUpload         Boolean
   uploadDay                     String?
   policiesApproved              Boolean
-  created_at                    DateTime     @default(now())
-  updated_at                    DateTime     @updatedAt
-  deleted                       Boolean      @default(false)
-
-  Rating              Rating[]
-  ShareDownloadMaster ShareDownloadMaster[]
-  Chapters            Chapters[]
-  Subscriber          Subscriber[]
+  created_at                    DateTime              @default(now())
+  updated_at                    DateTime              @updatedAt
+  deleted                       Boolean               @default(false)
+  lastChapter                   Json
+  lastChapterUpdatedAt          DateTime
+  weekday                       String
+  Rating                        Rating[]
+  ShareDownloadMaster           ShareDownloadMaster[]
+  Chapters                      Chapters[]
+  Subscriber                    Subscriber[]
 }
 
 model GenreMaster {
