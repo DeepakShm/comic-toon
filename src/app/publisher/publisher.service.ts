@@ -17,6 +17,7 @@ import {
 import { UploadApiResponse } from 'cloudinary';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ReqUser } from 'src/common/types/JwtUserPayload';
+import { WeekDays } from '../comic/dto/getComic.dto';
 
 @Injectable()
 export class PublisherService {
@@ -32,6 +33,7 @@ export class PublisherService {
     thumbnailsMetadata.sqaureThumbnail = await this.uploadThumnails(comicThumbnail.sqaureThumbnail[0]);
     thumbnailsMetadata.horizontalThumbnail = await this.uploadThumnails(comicThumbnail.horizontalThumbnail[0]);
 
+    const currentDate = new Date();
     // creating comic record in database.
     const slug = comicData.comic_name.toLowerCase().trim().replace(/\s+/g, '-');
     const result = await this.prisma.comic.create({
@@ -49,6 +51,9 @@ export class PublisherService {
         horizontal_thumbnail: thumbnailsMetadata.horizontalThumbnail.secure_url,
         square_thumbnail_metadata: thumbnailsMetadata.sqaureThumbnail,
         horizontal_thumbnail_metadata: thumbnailsMetadata.horizontalThumbnail,
+        lastChapter: {},
+        lastChapterUpdatedAt: currentDate.toISOString(),
+        weekday: WeekDays[currentDate.getDay()],
       },
     });
 
@@ -83,7 +88,7 @@ export class PublisherService {
       chapterFiles.panels.push(metadata);
     }
 
-    const lastChapterNumber = await this.getLastChapterNumber();
+    const lastChapterNumber = await this.getLastChapterNumber(exists.data.comicId);
 
     const chapter = await this.prisma.chapters.create({
       data: {
@@ -106,13 +111,26 @@ export class PublisherService {
       include: { Panels: { select: { panel_metadata: true } } },
     });
 
+    const currentDate = new Date();
+
+    await this.prisma.comic.update({
+      where: { comicId: chapterData.comic_id },
+      data: {
+        status_id: 2,
+        lastChapter: chapter,
+        lastChapterUpdatedAt: currentDate.toISOString(),
+        weekday: WeekDays[currentDate.getDay()],
+      },
+    });
+
     if (chapter === null) throw new BadRequestException('Something went wrong');
     return chapter;
   }
 
-  async getLastChapterNumber() {
+  async getLastChapterNumber(comic_id: string) {
     const lastChapterNumber =
-      (await this.prisma.chapters.aggregate({ _max: { chapter_number: true } }))._max.chapter_number || 0;
+      (await this.prisma.chapters.aggregate({ where: { comic_id }, _max: { chapter_number: true } }))._max
+        .chapter_number || 0;
     return lastChapterNumber + 1;
   }
 

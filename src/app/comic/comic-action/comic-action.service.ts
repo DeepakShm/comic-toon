@@ -45,7 +45,7 @@ export class ComicActionService {
     }
 
     // calculating new total rating
-    const newTotalRating = numberOfUserRated > 0 ? (comicExists.data.totalRating + rate) / numberOfUserRated : 0;
+    const newTotalRating = numberOfUserRated > 0 ? (comicExists.data.totalRating + rate) / numberOfUserRated : rate;
     // updating the comic total rating
     const comic = await this.prisma.comic.update({
       where: { comicId: comic_id },

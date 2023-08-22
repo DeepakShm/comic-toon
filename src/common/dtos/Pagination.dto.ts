@@ -1,16 +1,22 @@
-import { IsNumber, IsOptional, Min } from '@nestjs/class-validator';
+import { IsNumber, IsOptional, Max, Min } from '@nestjs/class-validator';
 import { Transform } from 'class-transformer';
 
 export class PaginationDTO {
   @Transform(({ value }) => +value)
-  @Min(1)
+  @Min(0)
   @IsNumber()
   @IsOptional()
-  page: number;
+  offset: number;
 
   @Transform(({ value }) => +value)
-  @Min(2)
+  @Max(100)
+  @Min(15)
   @IsNumber()
   @IsOptional()
   limit: number;
+
+  constructor() {
+    this.limit = 15;
+    this.offset = 0;
+  }
 }
